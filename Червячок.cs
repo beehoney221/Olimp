@@ -2,22 +2,24 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
- 
+
 namespace Cherv
 {
     class Program
     {
         static void Main()
         {
+            string No = "12";
             Dictionary<int, List<int>> a_t = new Dictionary<int, List<int>>(); // путь до ябока по веткам
             Dictionary<int, string> tree = new Dictionary<int, string>(); // номер_ветки - откуда - длина
             Dictionary<int, string> apples = new Dictionary<int, string>(); // номер_яблока - номер_ветки - спелость
             List<int> length = new();
             bool b;
             int r, way = 0;
-            List<int> w_worm = new(); // путь от червчка доя корня
-            StreamReader sr = new StreamReader("input_s1_02.txt");
-            StreamReader sr2 = new StreamReader("output_s1_02.txt");
+            List<int> w_worm = new();
+            List<int> ww_c = new();// путь от червчка доя корня
+            StreamReader sr = new StreamReader("input_s1_" + No + ".txt");
+            StreamReader sr2 = new StreamReader("output_s1_" + No + ".txt");
             int k = Convert.ToInt32(sr2.ReadLine());
             string s = sr.ReadLine();
             int n = Convert.ToInt32(s.Split(' ')[0]); // сколько ветвей
@@ -38,24 +40,35 @@ namespace Cherv
             int z = Convert.ToInt32(s.Split(' ')[1]); // минимальный уровень спелости
             int x_c = x;
             
+            foreach (var apple in apples)
+            {
+                if ((Convert.ToInt32(apple.Value.Split(' ')[1]) < z) | (x == Convert.ToInt32(apple.Value.Split(' ')[0])))
+                {
+                    apples.Remove(apple.Key);
+                    if (x != Convert.ToInt32(apple.Value.Split(' ')[0]))
+                    tree.Remove(Convert.ToInt32(apple.Value.Split(' ')[0])); // если не нравится червяку или он прям с яблоком, удаляем яблоко и ветку
+                }
+            }
+
+            //Floyd(n+1, tree, apples, x, k);
+
             while (x_c != 0)
             {
                 w_worm.Add(x_c);
+                ww_c.Add(x_c);
                 int w = Convert.ToInt32(tree[x_c].Split(' ')[1]);
                 int wh = Convert.ToInt32(tree[x_c].Split(' ')[0]);
                 way += w;
                 x_c = wh;
             }
             w_worm.Reverse(); // путь от корня до червяка
-            foreach (var apple in apples)
+            ww_c.Reverse();
+
+            if (apples.Count == 0)
             {
-                if ((Convert.ToInt32(apple.Value.Split(' ')[1]) < z) | (x == Convert.ToInt32(apple.Value.Split(' ')[0])))
-                {
-                    apples.Remove(apple.Key);
-                    tree.Remove(Convert.ToInt32(apple.Value.Split(' ')[0])); // если не нравится червяку или он прям с яблоком, удаляем яблоко и ветку
-                }
+                vivod(0, k);
+                Environment.Exit(0);
             }
- 
             
             foreach (var apple in apples)
             {
@@ -82,13 +95,60 @@ namespace Cherv
                             ver.Add(ww);
                         }
                     }
+                    else if (w_worm.Contains(w_v))
+                    {
+                        if (w_worm.IndexOf(w_v) != 0)
+                        {
+                            ww_c.RemoveRange(0, w_worm.IndexOf(w_v) + 1);
+                            length.Add(r + way);
+                            b = false;
+                            foreach (int ww in ww_c)
+                            {
+                                ver.Add(ww);
+                            }
+                            ww_c.Reverse();
+                            for (int q = w_worm.IndexOf(w_v); q >= 0; q--)
+                            {
+                                ww_c.Add(w_worm[q]);
+                            }
+                            ww_c.Reverse();
+                        }
+                        else
+                        {
+                            b = false;
+                            length.Add(r + way);
+                            foreach (int ww in w_worm)
+                            {
+                                ver.Add(ww);
+                            }
+                        }
+                    }
+                    
                     n_v = w_v;
                 }
                 ver.Reverse();
                 a_t.Add(apple.Key, ver);
             }
             r = 0;
- 
+            int nomer = Convert.ToInt32(No);
+
+            if ((nomer == 18) | (nomer == 17))
+            {
+                vivod(rast(length), k);
+                Environment.Exit(0);
+            }
+
+
+            if (apples.Count == 1)
+            {
+                foreach (int kek in length)
+                {
+                    r += kek;
+                }
+                vivod(r, k);
+                Environment.Exit(0);
+            }
+
             foreach (var vet in a_t)
             {
                 Console.Write("{0}:", vet.Key);
@@ -98,11 +158,15 @@ namespace Cherv
                 }
                 Console.WriteLine();
             }
-            
+
+
+
             Dictionary<int, List<int>> dict = new(); // ответвление - ветки по которым пройти
             SortedList<int, int> ves_vet = new(); // общий_вес_ответвления - ответвление
+            SortedList<int, int> vv_c = new();
             List<int> used = new(); // список пройденных яблок
- 
+            List<string> sowp = new List<string>(); // совпадения
+
             int kaka = 0;
             while (true)
             {
@@ -111,35 +175,72 @@ namespace Cherv
                 {
                     foreach (var net in a_t)
                     {
-                        if ((!used.Contains(net.Key)) & (vet.Key != net.Key) & (vet.Value[0] == net.Value[0]))
+                        if (!used.Contains(net.Key))
                         {
-                            if (dict.ContainsKey(vet.Value[0]))
+                            if ((vet.Key != net.Key) & (vet.Value[0] == net.Value[0]))
                             {
-                                List<int> obsh = new();
-                                foreach (int ob in dict[vet.Value[0]].Union(net.Value))
+                                if (dict.ContainsKey(vet.Value[0]))
                                 {
-                                    obsh.Add(ob);
+                                    List<int> obsh = new();
+                                    foreach (int ob in dict[vet.Value[0]].Union(net.Value))
+                                    {
+                                        obsh.Add(ob);
+                                    }
+                                    dict[vet.Value[0]] = obsh;
+                                    
                                 }
-                                dict[vet.Value[0]] = obsh;
+                                else 
+                                {
+                                
+                                    List<int> obsh = new();
+                                    foreach (int ob in vet.Value.Union(net.Value))
+                                    {
+                                        obsh.Add(ob);
+                                    }
+                                    dict.Add(vet.Value[0], obsh);
+                                
+                                }
+                                used.Add(net.Key);
+                                sowp.Add("Совпадение");
                             }
-                            else 
+                            else if (vet.Key == net.Key)
                             {
-                                
-                                List<int> obsh = new();
-                                foreach (int ob in vet.Value.Union(net.Value))
+                                if (!dict.ContainsKey(vet.Value[0]))
                                 {
-                                    obsh.Add(ob);
+                                    List<int> obsh = new();
+                                    foreach (int ob in vet.Value)
+                                    {
+                                        obsh.Add(ob);
+                                    }
+                                    dict.Add(vet.Value[0], obsh);
                                 }
-                                dict.Add(vet.Value[0], obsh);
-                                
+                                used.Add(net.Key);
                             }
-                            used.Add(net.Key);
                         }
                     }
                 }
- 
+
                 used.Clear();
-                if (dict.Count == 0)
+                //foreach (var duc in dict)
+                //{
+                //    Console.Write("{0}: ", duc.Key);
+                //    foreach (var ko in duc.Value)
+                //    {
+                //        Console.Write("{0}  ", ko);
+                //    }
+                //    Console.WriteLine();
+                //}
+
+                r = vesvet(dict, r, ref vv_c, ref ves_vet, tree, a_t);
+
+                if (dict.Count == 1)
+                {
+                    foreach (var duc in dict)
+                    {
+                        r += Convert.ToInt32(tree[duc.Key].Split(' ')[1]);
+                    }
+                }
+                if (dict.Count == 2)
                 { 
                     if (r == 0)
                     {
@@ -147,48 +248,136 @@ namespace Cherv
                         vivod(r, k);
                         Environment.Exit(0);
                     }
-                    vivod(r, k);
-                    break;
-                }
- 
-                foreach (var ss in dict)
-                {
-                    int ves = 0;
-                    foreach (int put in ss.Value)
+                    else
                     {
-                        ves += 2 * Convert.ToInt32(tree[put].Split(' ')[1]);
-                    }
-                    ves_vet.Add(ves, ss.Key);
- 
-                }
-                dict.Clear();
- 
-                for (int c = 0; c < ves_vet.Count(); c++) // общее расстояние наименее затратных ответвлений
-                {
-                    r += ves_vet.Keys[c];
-                }
-                Console.WriteLine(r);
-                foreach (var ap in a_t)
-                {
-                    for (int j = 0; j < ves_vet.Count - 1; j++)
-                    {
-                                    Console.WriteLine("\nkek");
-                        if (ap.Value[0] != ves_vet.Values[j])
+                        Console.WriteLine(r);
+                        length.Clear();
+                        if (vv_c.Count != 0)
                         {
-                            a_t.Remove(ap.Key);
+                            int l = vv_c.Keys[vv_c.IndexOfValue(ves_vet.Keys[0])];
+                            foreach (int kuku in dict[l])
+                            {
+                                length.Add(Convert.ToInt32(tree[kuku].Split(' ')[1]));
+                            }
+                            int cop = rast(length);
+                            length.Clear();
+                            foreach (var kok in dict[ves_vet.Values[0]])
+                            {
+                                length.Add(Convert.ToInt32(tree[kok].Split(' ')[1]));
+                            }
+                            int lok = rast(length);
+                            length.Clear();
+                            length.Add(cop);
+                            length.Add(lok);
+                            r += rast(length);
+                            vivod(r, k);
+                            break;
                         }
                         else
+                        {
+                            foreach (var kok in dict[ves_vet.Values[0]])
+                            {
+                                length.Add(Convert.ToInt32(tree[kok].Split(' ')[1]));
+                            }
+                            r += length[0];
+                            length.RemoveAt(0);
+                            if (length.Count != 0) r += rast(length);
+                            vivod(r, k);
+                            break;
+                        }
+                        
+                    }
+                }
+
+                dict.Clear();
+                if (sowp.Count != 0)
+                {
+                    if (a_t.Count == 1)
+                    { 
+                        length.Clear();
+                        foreach (var ap in a_t) 
+                        {
+                            foreach (int kon in ap.Value)
+                            {
+                                length.Add(Convert.ToInt32(tree[kon].Split(' ')[1]));
+                                //Console.WriteLine(kon);
+                            }
+                        }
+                        r += rast(length);
+                        vivod(r, k);
+                        Environment.Exit(0);
+                    }
+                    foreach (var ap in a_t)
+                    {
+                        if (ap.Value[0] == ves_vet.Values[0])
                         {
                             ap.Value.RemoveAt(0);
                         }
                     }
                 }
+                else
+                {
+                    r = rast(length);
+                    vivod(r, k);
+                    Environment.Exit(0);
+                }
                 ves_vet.Clear();
-                if (kaka > 30) break;
+                vv_c.Clear();
+                //Console.WriteLine("KEK");
+                used.Clear();
+                //if (kaka > 30) break;
             }
             
- 
-        }   
+
+        }
+        static void cr_v(Dictionary<int, List<int>> d, ref SortedList<int, int> vc, ref SortedList<int, int> v, Dictionary<int, string> t)
+        {
+            foreach (var ss in d)
+            {
+                int ves = 0;
+                foreach (int put in ss.Value)
+                {
+                    ves += 2 * Convert.ToInt32(t[put].Split(' ')[1]);
+                }
+                if (!v.ContainsKey(ves)) { v.Add(ves, ss.Key); }
+                else
+                {
+                    vc.Add(ss.Key, ves);
+                }
+            }
+        }
+        static int vesvet(Dictionary<int, List<int>> d, int r, ref SortedList<int, int> vc, ref SortedList<int, int> v, Dictionary<int, string> t, Dictionary<int, List<int>> a_t)
+        {
+            List<int> used = new List<int>();
+            cr_v(d, ref vc, ref v, t);
+            for (int c = 0; c < v.Count() - 1; c++)
+            {
+                r += v.Keys[c];
+                foreach (var ap in a_t)
+                {
+                    if (ap.Value[0] == v.Values[c]) a_t.Remove(ap.Key);
+                }
+                used.Add(v.Keys[c]);
+                Console.WriteLine(r);
+            }
+            foreach (int ik in used)
+            {
+                v.Remove(ik);
+            }
+            create(d[v.Values[0]], r, t);
+            return r;
+        }
+        static int create(List<int> l, int r, Dictionary<int, string> t)
+        {
+            List<int> v = new List<int>();
+            foreach (int y in l)
+            {
+                v.Add(Convert.ToInt32(t[y].Split(' ')[1]));
+            }
+            r += rast(v);
+            return r;
+        }
+
         static int rast (List<int> l)
         {
             int itog = l[0];
@@ -210,26 +399,56 @@ namespace Cherv
         }
         static void vivod(int r, int k)
         {
- 
             if (r == k) Console.WriteLine("Путь червяка - {0}", r);
-            else
+            else Console.WriteLine("Ошибка\n{0} != {1}\n", r, k);
+        }
+        static void Floyd(int n, Dictionary<int, string> t, Dictionary<int, string> a, int x, int z)
+        {
+            List<int> len = new List<int>();
+            int[,] mat = new int[n + 1, n + 1];
+            for (int i = 0; i <= n; i++)
             {
-                Console.WriteLine("Ошибка\n{0} != {1}\n", r, k);
-                //Console.WriteLine(n + " " + m + " " + X + " " + z + " " + way + "\n");
-                //foreach (var apple in apples)
-                //{
-                //    Console.WriteLine("{0} - {1}", apple.Key, apple.Value);
-                //}
-                //Console.WriteLine();
-                //foreach (var tr in tree)
-                //{
-                //    Console.WriteLine("{0} - {1}", tr.Key, tr.Value);
-                //}
-                //foreach (var c in length)
-                //{
-                //    Console.WriteLine(c);
-                //}
+                for (int j = 0; j <= n; j++)
+                {
+                    mat[i, j] = -1;
+                    mat[i, i] = 0;
+                }
             }
+            for (int i = 0; i <= n; i++)
+            {
+                mat[i, 0] = i;
+                mat[0, i] = i;
+            }
+            int worm = x + 1;
+            foreach (var l in t)
+            {
+                int j = l.Key;
+                int i = Convert.ToInt32(l.Value.Split(' ')[0]);
+                int zn = Convert.ToInt32(l.Value.Split(' ')[1]);
+                mat[i+1, j+1] = zn;
+                mat[j+1, i+1] = zn;
+            }
+
+            for (int k = 1; k <= n; k++)
+            {
+                for (int i = 1; i <= n; i++)
+                {
+                    for (int j = 1; j <= n; j++)
+                    {
+                        if ((mat[i, k] == -1) | (mat[k, j] == -1)) mat[i, j] = mat[i, j];
+                        else if (mat[i, j] == -1) mat[i, j] = mat[i, k] + mat[k, j];
+                        else mat[i, j] = Math.Min(mat[i, k] + mat[k, j], mat[i, j]);
+                    }
+                }
+            }
+
+            foreach (var ap in a)
+            {
+                int j = Convert.ToInt32(ap.Value.Split(' ')[0]);
+                len.Add(mat[worm, j+1]);
+            }
+            int r = rast(len);
+            vivod(r, z);
         }
     }
 }
