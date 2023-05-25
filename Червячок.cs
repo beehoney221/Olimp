@@ -9,7 +9,7 @@ namespace Cherv
     {
         static void Main()
         {
-            string No = "13";
+            string No = "00";
             Dictionary<int, List<int>> a_t = new Dictionary<int, List<int>>(); // путь до ябока по веткам
             Dictionary<int, string> tree = new Dictionary<int, string>(); // номер_ветки - откуда - длина
             Dictionary<int, string> apples = new Dictionary<int, string>(); // номер_яблока - номер_ветки - спелость
