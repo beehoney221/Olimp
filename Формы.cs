@@ -598,7 +598,6 @@ namespace Forms
                 pol.Add(d1);
             }
             //Решение задачи
-            //Программу написал Мрдак А.Б.
             List<List<int>> otvet = new List<List<int>>();
             for (var i = 0; i < det.Count; i++)
             {
@@ -642,8 +641,7 @@ namespace Forms
                     }
                 }
             }
-            //Программу написал Мрдак А.Б.
-            //Вывод моего ответа
+            //Вывод ответа
             List<string[]> otvetreal = new List<string[]>();
             for (var i = 0; i < n; i++)
             {
